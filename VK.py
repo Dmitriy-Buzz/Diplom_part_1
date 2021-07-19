@@ -67,8 +67,9 @@ class Vkapi:
         all = dict(zip(all_name, all_size))
         file_name = []
         for key, value in all.items():
-            file_name = key + '{}'.format('.jpg')
-            photos_dict = {'File name': file_name, 'sizes': value}
+            file_name.append(key + '{}'.format('.jpg'))
+            file_name_2 = key + '{}'.format('.jpg')
+            photos_dict = {'File name': file_name_2, 'sizes': value}
             photos_list.append(photos_dict)
             with open('List_photos.json', 'w') as f:
                 json.dump(photos_list, f)
