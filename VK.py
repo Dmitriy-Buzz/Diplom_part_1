@@ -7,30 +7,56 @@ with open("token_yadisk.txt", encoding="utf-8") as file_tya:
     token_ya = file_tya.read().strip()
 
 class Vkapi:
-    def __init__(self, token):
+    def __init__(self, token, user_id, count=5, offset=0):
         self.token = token
+        self.user_id = user_id
+        self.count = count
+        self.offset = offset
+
+    def infor_user(self):
+        URL = "https://api.vk.com/method/users.get"
+        params = {
+            'user_ids': '{}'.format(self.user_id),
+            'access_token': '{}'.format(self.token),
+            'v': '5.131'
+        }
+        res = requests.get(URL, params=params)
+        user = (res.json())
+        return user['response'][0]['first_name'] + ' ' + user['response'][0]['last_name']
 
     def info_users(self):
         URL = "https://api.vk.com/method/users.get"
         params = {
-            'user_ids': 'begemot_korovin',
-            'access_token': "{}".format(self.token),
+            'user_ids': '{}'.format(self.user_id),
+            'fields': 'photo_id',
+            'access_token': '{}'.format(self.token),
             'v': '5.131'
         }
         res = requests.get(URL, params=params)
+        photo_id = (res.json()['response'][0]['photo_id'])
+        num_id = photo_id.split('_')
+        return num_id[0]
 
     def info_photos(self):
+        user_id = self.info_users()
         URL = "https://api.vk.com/method/photos.get"
         params = {
-            'user_ids': 'begemot_korovin',
+            'owner_id': '{}'.format(user_id),
             'album_id': 'profile',
             'extended': '1',
             'photos_sizes': '1',
-            'access_token': "{}".format(self.token),
+            'count':  self.count,
+            'offset':  self.offset,
+            'access_token': '{}'.format(self.token),
             'v': '5.131'
         }
         res = requests.get(URL, params=params)
         return res.json()
+
+    def count_photos(self):
+        data = self.info_photos()
+        count_photo = data['response']['count']
+        return count_photo
 
     def get_file_name(self):
         likes_l = []
@@ -79,7 +105,7 @@ class Vkapi:
         key_name = self.download_photos()
         url = self.get_url()
         all = dict(zip(key_name, url))
-        for key, value in tqdm(all.items()):
+        for key, value in tqdm(all.items(), ascii=True, desc='Загрузка файлов на Yandex.disk'):
             get_url = requests.get(value)
             upload_ya = YaDisk(token=token_ya)
             upload_ya.upload_file_to_disk('Photos/{}'.format(key), get_url.content)
